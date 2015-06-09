@@ -71,6 +71,7 @@ void convert_dataset(const char* image_filename, const char* label_filename,
 
   char label_i;
   char label_j;
+  char label_k;
   char* pixels = new char[3 * rows * cols];
   const int kMaxKeyLength = 10;
   char key[kMaxKeyLength];
@@ -83,7 +84,7 @@ void convert_dataset(const char* image_filename, const char* label_filename,
   LOG(INFO) << "A total of " << num_items << " items.";
   LOG(INFO) << "Rows: " << rows << " Cols: " << cols;
   for (int itemid = 0; itemid < num_items; ++itemid) {
-    int i = caffe::caffe_rng_rand() % num_items;  // pick a random  pair
+    int i = caffe::caffe_rng_rand() % num_items;  // pick triplet groups
     int j = caffe::caffe_rng_rand() % num_items;
     int k = caffe::caffe_rng_rand() % num_items;
     read_image(&image_file, &label_file, i, rows, cols,
@@ -92,15 +93,17 @@ void convert_dataset(const char* image_filename, const char* label_filename,
         pixels + (rows * cols), &label_j);
     read_image(&image_file, &label_file, k, rows, cols,
         pixels + (2 * rows * cols), &label_k);
+
     datum.set_data(pixels, 3*rows*cols);
-    if (label_i  == label_j && label_i  == label_k) {
+    if (label_i  == label_j && label_i  != label_k) {
       datum.set_label(1);
+    
+      datum.SerializeToString(&value);
+      snprintf(key, kMaxKeyLength, "%08d", itemid);
+      db->Put(leveldb::WriteOptions(), std::string(key), value);
     } else {
       datum.set_label(0);
     }
-    datum.SerializeToString(&value);
-    snprintf(key, kMaxKeyLength, "%08d", itemid);
-    db->Put(leveldb::WriteOptions(), std::string(key), value);
   }
 
   delete db;
