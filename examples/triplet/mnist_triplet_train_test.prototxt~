@@ -12,7 +12,7 @@ layer {
   }
   data_param {
     source: "examples/triplet/mnist_triplet_train_leveldb"
-    batch_size: 64
+    batch_size: 128
   }
 }
 layer {
@@ -493,7 +493,8 @@ layer {
   bottom: "feat_false"
   bottom: "sim"
   top: "loss"
-  contrastive_loss_param {
+  triplet_loss_param {
     margin: 1
   }
 }
+
